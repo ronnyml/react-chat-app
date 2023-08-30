@@ -1,0 +1,217 @@
+/* Global Styles */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+input {
+  font-size: 16px;
+}
+
+body {
+  line-height: 1.4;
+  color: #333;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+h1 {
+  margin-bottom: 16px;
+}
+
+label {
+  display: block;
+  font-size: 14px;
+  margin: 4px 16px;
+  color: #fff;
+  text-align: right;
+}
+
+input,
+select {
+  border: 1px solid #eee;
+  padding: 12px;
+  outline: none;
+  font-size: 16px;
+}
+
+button {
+  cursor: pointer;
+  padding: 12px;
+  background: #333744;
+  border: none;
+  color: white;
+  font-size: 16px;
+  transition: background 0.3s ease;
+  width: 150px;
+}
+
+button:hover {
+  background: #2c2f3a;
+}
+
+button:disabled {
+  cursor: default;
+  background: #2c2f3a;
+}
+
+/* Centered Form Styles */
+.centered-form {
+  background: #333744;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.centered-form-box {
+  box-shadow: 0px 0px 17px 1px #1d1f26;
+  background: #f7f7fa;
+  padding: 24px;
+  width: 300px;
+}
+
+.centered-form button {
+  width: 100%;
+}
+
+.centered-form input,
+.centered-form select {
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+/* Flex Container Styles */
+.flex-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.header {
+  padding: 10px 40px 10px 10px;
+}
+
+.current-room {
+  color: #333744;
+  font-size: 16px;
+  margin: 8px;
+}
+
+.leave-chat {
+  text-align: right;
+  display: inline-block;
+}
+
+/* Chat Styles */
+.chat {
+  display: flex;
+}
+
+.sidebar {
+  height: 100vh;
+  color: white;
+  background: #333744;
+  width: 225px;
+  overflow-y: scroll;
+}
+
+.chat-main {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  max-height: 100vh;
+}
+
+.chat-messages {
+  flex-grow: 1;
+  padding: 24px;
+  overflow-y: scroll;
+}
+
+.message {
+  margin-bottom: 16px;
+}
+
+.message-username {
+  font-weight: 600;
+  font-size: 14px;
+  margin-right: 8px;
+}
+
+.message-time {
+  color: #777;
+  font-size: 14px;
+}
+
+.message a {
+  color: #0070cc;
+}
+
+.compose {
+  display: flex;
+  flex-shrink: 0;
+  margin-top: 16px;
+  padding: 24px;
+}
+
+.compose form {
+  display: flex;
+  flex-grow: 1;
+  margin-right: 16px;
+}
+
+.compose input {
+  border: 2px solid #e0dfdf;
+  border-radius: 5px;
+  width: 90%;
+  padding: 12px;
+  margin: 0 16px 0 0;
+  flex-grow: 1;
+}
+
+.compose button {
+  font-size: 16px;
+}
+
+/* Rooms and Users List Styles */
+.rooms,
+.users {
+  list-style-type: none;
+  font-weight: 300;
+  padding: 5px;
+}
+
+.room a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.room-used,
+.room,
+.user {
+  margin: 4px;
+  font-size: 15px;
+}
+
+.room-used {
+  color: #d6744d;
+}
+
+.room-title {
+  font-weight: 400;
+  font-size: 22px;
+  background: #2c2f3a;
+  padding: 24px;
+}
+
+.list-title {
+  font-weight: 500;
+  font-size: 18px;
+  margin-bottom: 4px;
+  padding: 5px 15px;
+}
+
