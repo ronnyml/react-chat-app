@@ -44,11 +44,27 @@ const announce = (room: string, text: string) => {
   io.to(room).emit('message', generateMessage(ADMIN_USER, text));
 };
 
+/**
+ * Removes the socket from whatever room it is in, if any. Called when a client
+ * leaves, disconnects, or joins a different room.
+ */
+const handleLeave = (socket: ChatSocket) => {
+  const user = removeUser(socket.id);
+  if (!user) return;
+
+  socket.leave(user.room);
+  announce(user.room, `${user.username} ${USER_LEFT}`);
+  io.to(user.room).emit('roomUsers', getUsersInRoom(user.room));
+};
+
 const handleJoin = (
   socket: ChatSocket,
   payload: JoinRequest,
   callback: (error?: string) => void,
 ) => {
+  // Joining is idempotent: one socket is only ever in one room.
+  handleLeave(socket);
+
   const result = addUser(socket.id, payload);
 
   if ('error' in result) {
@@ -93,17 +109,10 @@ const handleSendMessage = (
   callback?.();
 };
 
-const handleLeave = (socket: ChatSocket) => {
-  const user = removeUser(socket.id);
-  if (!user) return;
-
-  announce(user.room, `${user.username} ${USER_LEFT}`);
-  io.to(user.room).emit('roomUsers', getUsersInRoom(user.room));
-};
-
 io.on('connection', (socket: ChatSocket) => {
   socket.on('join', (payload, callback) => handleJoin(socket, payload, callback));
   socket.on('sendMessage', (text, callback) => handleSendMessage(socket, text, callback));
+  socket.on('leave', () => handleLeave(socket));
   socket.on('disconnect', () => handleLeave(socket));
 });
 
