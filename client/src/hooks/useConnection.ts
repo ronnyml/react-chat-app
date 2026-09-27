@@ -1,23 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 
 import { socket } from '@/lib/socket';
 
-/** Tracks whether the socket is currently connected. */
-export const useConnection = (): boolean => {
-  const [isConnected, setIsConnected] = useState(socket.connected);
+const subscribe = (onStoreChange: () => void) => {
+  socket.on('connect', onStoreChange);
+  socket.on('disconnect', onStoreChange);
 
-  useEffect(() => {
-    const onConnect = () => setIsConnected(true);
-    const onDisconnect = () => setIsConnected(false);
-
-    socket.on('connect', onConnect);
-    socket.on('disconnect', onDisconnect);
-
-    return () => {
-      socket.off('connect', onConnect);
-      socket.off('disconnect', onDisconnect);
-    };
-  }, []);
-
-  return isConnected;
+  return () => {
+    socket.off('connect', onStoreChange);
+    socket.off('disconnect', onStoreChange);
+  };
 };
+
+const getSnapshot = () => socket.connected;
+
+/**
+ * Tracks whether the socket is connected.
+ *
+ * This reads through useSyncExternalStore so a connection that lands between
+ * the first render and the subscription is not missed.
+ */
+export const useConnection = (): boolean => useSyncExternalStore(subscribe, getSnapshot);
