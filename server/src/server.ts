@@ -19,12 +19,19 @@ import { ROOMS } from './utils/rooms';
 
 dotenv.config({ quiet: true });
 
-const CLIENT_URL = process.env.CLIENT_URL ?? 'http://localhost:5173';
+/**
+ * Origins allowed to talk to this server. Accepts a comma separated list, so
+ * one deployment can serve a local dev client and a hosted one.
+ */
+const allowedOrigins = (process.env.CLIENT_URL ?? 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const app: Application = express();
 const server = http.createServer(app);
 
-app.use(cors({ origin: CLIENT_URL }));
+app.use(cors({ origin: allowedOrigins }));
 
 app.get('/', (_req: Request, res: Response) => {
   res.json({ name: 'React Chat API', status: 'ok' });
@@ -35,7 +42,7 @@ app.get('/api/rooms', (_req: Request, res: Response) => {
 });
 
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
-  cors: { origin: CLIENT_URL },
+  cors: { origin: allowedOrigins },
 });
 
 type ChatSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
@@ -62,7 +69,19 @@ const handleJoin = (
   payload: JoinRequest,
   callback: (error?: string) => void,
 ) => {
-  // Joining is idempotent: one socket is only ever in one room.
+  const current = getUser(socket.id);
+  const isSameRoom =
+    current?.room.toLowerCase() === payload.room?.trim().toLowerCase() &&
+    current?.username.toLowerCase() === payload.username?.trim().toLowerCase();
+
+  // Already here. Resend the member list and skip the join notices.
+  if (current && isSameRoom) {
+    callback();
+    io.to(current.room).emit('roomUsers', getUsersInRoom(current.room));
+    return;
+  }
+
+  // One socket is only ever in one room, so leave the old one first.
   handleLeave(socket);
 
   const result = addUser(socket.id, payload);
