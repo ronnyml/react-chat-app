@@ -1,14 +1,21 @@
 {
   "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
     "module": "commonjs",
-    "esModuleInterop": true,
-    "target": "es6",
-    "noImplicitAny": true,
     "moduleResolution": "node",
-    "sourceMap": true,
     "rootDir": "./src",
-    "outDir": "dist",
-    "baseUrl": "./src"
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitOverride": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "types": ["node", "vitest/globals"]
   },
   "include": ["src/**/*"]
 }
