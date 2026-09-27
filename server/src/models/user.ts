@@ -1,44 +1,68 @@
-import { User } from "interfaces/user.interface";
-import { USER_ROOM_REQUIRED, USER_IN_USE } from "utils/constants";
+import {
+  MAX_USERNAME_LENGTH,
+  ROOM_NOT_FOUND,
+  USERNAME_TOO_LONG,
+  USER_IN_USE,
+  USER_ROOM_REQUIRED,
+} from '../utils/constants';
+import { resolveRoom } from '../utils/rooms';
+import type { JoinRequest, User } from '../types/user';
 
-const users: User[] = [];
+export type AddUserResult = { user: User } | { error: string };
 
-export const addUser = (user: User): User | { error: string } => {
-  const { id, username, room } = user;
-  const lowerCaseUsername = username.trim().toLowerCase();
-  const lowerCaseRoom = room.trim().toLowerCase();
+/**
+ * Connected users, keyed by socket id. This lives in memory on purpose, so a
+ * restart clears every room. Swap this module for a shared store (Redis) before
+ * running more than one instance.
+ */
+const users = new Map<string, User>();
 
-  if (!lowerCaseUsername || !lowerCaseRoom) {
+export const addUser = (id: string, request: JoinRequest): AddUserResult => {
+  const username = request.username?.trim() ?? '';
+  const requestedRoom = request.room?.trim() ?? '';
+
+  if (!username || !requestedRoom) {
     return { error: USER_ROOM_REQUIRED };
   }
 
-  const isUserInRoom = users.some(u => u.room === lowerCaseRoom && u.username === lowerCaseUsername);
-  if (isUserInRoom) {
+  if (username.length > MAX_USERNAME_LENGTH) {
+    return { error: USERNAME_TOO_LONG };
+  }
+
+  const room = resolveRoom(requestedRoom);
+  if (!room) {
+    return { error: ROOM_NOT_FOUND };
+  }
+
+  const isTaken = [...users.values()].some(
+    (user) =>
+      user.room === room && user.username.toLowerCase() === username.toLowerCase(),
+  );
+  if (isTaken) {
     return { error: USER_IN_USE };
   }
 
-  const newUser: User = { ...user, id, username: lowerCaseUsername, room: lowerCaseRoom };
-  users.push(newUser);
-  return newUser;
+  const user: User = { id, username, room };
+  users.set(id, user);
+  return { user };
 };
 
+export const getUser = (id: string): User | undefined => users.get(id);
 
-export const getUser = (userId: string): User | undefined => {
-  return users.find((user) => user.id === userId);
-};
+export const getUsersInRoom = (room: string): User[] =>
+  [...users.values()]
+    .filter((user) => user.room === room)
+    .sort((a, b) => a.username.localeCompare(b.username));
 
-export const getUsers = () => {
-  return users;
-};
-
-export const getUsersInRoom = (room: string): User[] => {
-  room = room.trim().toLowerCase();
-  return users.filter((user) => user.room === room);
-};
-
-export const removeUser = (userId: string): User | undefined => {
-  const index = users.findIndex((user) => user.id === userId);
-  if (index !== -1) {
-    return users.splice(index, 1)[0];
+export const removeUser = (id: string): User | undefined => {
+  const user = users.get(id);
+  if (user) {
+    users.delete(id);
   }
+  return user;
+};
+
+/** Test helper. Drops every connected user. */
+export const resetUsers = (): void => {
+  users.clear();
 };

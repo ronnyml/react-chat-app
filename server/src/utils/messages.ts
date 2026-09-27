@@ -1,15 +1,7 @@
-const generateMessage = (username: string, text: string) => {
-  return {
-    username,
-    text,
-    createdAt: new Date().toLocaleString("en-US", {
-      hour: "numeric",
-      minute: "numeric",
-      hour12: true,
-    }),
-  };
-};
+import type { Message } from '../types/message';
 
-export {
-  generateMessage
-};
+export const generateMessage = (username: string, text: string): Message => ({
+  username,
+  text,
+  createdAt: new Date().toISOString(),
+});
