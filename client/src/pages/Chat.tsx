@@ -1,36 +1,26 @@
-import { useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Socket } from "socket.io-client";
-import Sidebar from "../components/Sidebar";
-import ChatBody from "components/ChatBody";
+import { useSearchParams } from 'react-router-dom';
 
-const Chat = ({ socket }: { socket: Socket }) => {
-  const pageRef = useRef(false);
-  const [searchParams] = useSearchParams();
-  const username = searchParams.get("username") || '';
-  const room = searchParams.get("room") || '';
-  const join = searchParams.get("join");
-  const user = { id: socket.id, username , room };
+import { ChatRoom } from '@/components/ChatRoom';
 
-  useEffect(() => {
-    if (pageRef.current) return;
-    pageRef.current = true;
+/**
+ * Reads the room from the URL and mounts the room view with a key, so every
+ * room starts with its own state.
+ */
+export const Chat = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const username = searchParams.get('username') ?? '';
+  const room = searchParams.get('room') ?? '';
 
-    if (join) {
-      socket.emit("join", user, (error: any) => {
-        if (error) {
-          console.log(error);
-        }
-      });
-    }
-  }, [socket, username, room]);
+  const handleSelectRoom = (nextRoom: string) => {
+    setSearchParams({ username, room: nextRoom });
+  };
 
   return (
-    <div className="chat">
-      <Sidebar socket={socket} joinedUser={user} />
-      <ChatBody socket={socket} joinedUser={user} />
-    </div>
+    <ChatRoom
+      key={`${username}:${room}`}
+      username={username}
+      room={room}
+      onSelectRoom={handleSelectRoom}
+    />
   );
-}
-
-export default Chat;
+};

@@ -1,77 +1,106 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Socket } from "socket.io-client";
-import rooms from "../data/rooms";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-interface FormData {
-  username: string;
-  room: string;
-}
+import { rooms } from '@/data/rooms';
+import { socket } from '@/lib/socket';
 
-const Home = ({ socket }: { socket: Socket }) => {
+const MAX_USERNAME_LENGTH = 20;
+
+export const Home = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState<FormData>({
-    username: "",
-    room: rooms[0].name
-  });
-  const { username, room } = formData;
-  const [error, setError] = useState(false);
+  const [username, setUsername] = useState('');
+  const [room, setRoom] = useState<string>(rooms[1]);
+  const [error, setError] = useState<string | null>(null);
+  const [isJoining, setIsJoining] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (username && room) {
-      const user = { id: socket.id, username, room };
-      socket.emit("join", user, (error: any) => {
-        if (error) {
-          setError(true);
-        } else {
-          setError(false);
-          navigate(`/chat?username=${username}&room=${room}`);
-        }
-      });
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const trimmed = username.trim();
+    if (!trimmed) {
+      setError('Please enter a username.');
+      return;
     }
-  };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [name]: value,
-    }));
-    setError(false);
+    setError(null);
+    setIsJoining(true);
+
+    socket.emit('join', { username: trimmed, room }, (joinError) => {
+      setIsJoining(false);
+
+      if (joinError) {
+        setError(joinError);
+        return;
+      }
+
+      navigate(
+        `/chat?username=${encodeURIComponent(trimmed)}&room=${encodeURIComponent(room)}`,
+      );
+    });
+
+    if (!socket.connected) socket.connect();
   };
 
   return (
-    <div className="centered-form">
-      <div className="centered-form-box">
-        <h1>Join</h1>
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            name="username"
-            placeholder="Username"
-            value={username}
-            onChange={handleChange}
-            required />
+    <main className="join">
+      <section className="join-card">
+        <span className="brand brand-lg">
+          <span className="brand-mark" aria-hidden="true" />
+          React Chat
+        </span>
+        <h1 className="join-title">Join a room</h1>
+        <p className="join-subtitle">
+          Pick a name, choose a room, and start talking in real time.
+        </p>
 
-          <select 
-            name="room" 
-            value={room}
-            onChange={handleChange}
-            required >
-            {rooms.map((room, index) => (
-              <option key={index} value={room.name}>
-                {room.name}
-              </option>
-            )
-            )}
-          </select>
-          <button>Join</button>
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="field">
+            <label htmlFor="username">Username</label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              value={username}
+              onChange={(event) => {
+                setUsername(event.target.value);
+                setError(null);
+              }}
+              placeholder="e.g. ronny"
+              maxLength={MAX_USERNAME_LENGTH}
+              autoComplete="off"
+              autoFocus
+              aria-invalid={error ? 'true' : undefined}
+              aria-describedby={error ? 'join-error' : undefined}
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="room">Room</label>
+            <select
+              id="room"
+              name="room"
+              value={room}
+              onChange={(event) => setRoom(event.target.value)}
+            >
+              {rooms.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button type="submit" className="button button-block" disabled={isJoining}>
+            {isJoining ? 'Joining...' : 'Join room'}
+          </button>
         </form>
-        {error && <p style={{padding: '5px'}}>This user is already in use. Choose another one.</p>}
-      </div>
-    </div>
-  )
-}
 
-export default Home;
+        {error && (
+          <p className="alert" id="join-error" role="alert">
+            {error}
+          </p>
+        )}
+      </section>
+    </main>
+  );
+};
